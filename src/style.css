@@ -1,0 +1,442 @@
+:root{
+  --void:#0b0a08;
+  --panel:#161209;
+  --panel2:#1d1710;
+  --iron:#3a2f20;
+  --blood:#7a1a1a;
+  --blood-bright:#b3271c;
+  --brass:#c2932f;
+  --brass-dim:#8a6c28;
+  --parchment:#ddd0b4;
+  --muted:#8c8070;
+  --good:#5c7a4a;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse at 50% -10%, #241c10 0%, var(--void) 55%);
+  color:var(--parchment);
+  font-family: 'Courier New', Courier, monospace;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+}
+#app{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  background:linear-gradient(180deg, var(--panel) 0%, var(--void) 100%);
+  border-left:1px solid var(--iron);
+  border-right:1px solid var(--iron);
+  position:relative;
+  overflow:hidden;
+}
+/* This is a controls app, not a document to select text out of — and a
+   long press anywhere (see attachLongPress in main.js) has to compete
+   with the browser's own long-press-to-select/callout gesture, which
+   otherwise wins the moment a screen swaps under an still-active touch.
+   Blocking selection app-wide kills that whole class of bug in one place
+   instead of chasing it per element as new long-press UI gets added.
+   Text inputs/textareas opt back in below since typing still needs it. */
+#app, #app *{
+  -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+}
+#app input, #app textarea{
+  -webkit-user-select:text; user-select:text; -webkit-touch-callout:default;
+}
+/* top status bar */
+#statusbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  background:var(--void);
+  border-bottom:2px solid var(--blood);
+  font-size:10px;
+  letter-spacing:2px;
+  color:var(--brass);
+  text-transform:uppercase;
+  flex-shrink:0;
+}
+#statusbar .dot{
+  display:inline-block; width:7px; height:7px; border-radius:50%;
+  background:var(--good); margin-right:6px; vertical-align:middle;
+  box-shadow:0 0 6px var(--good);
+}
+#statusbar .dot.busy{background:var(--brass); box-shadow:0 0 6px var(--brass); animation:blink 1s infinite;}
+#statusbar .dot.err{background:var(--blood-bright); box-shadow:0 0 6px var(--blood-bright);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+header{
+  padding:22px 20px 14px;
+  border-bottom:1px solid var(--iron);
+  flex-shrink:0;
+  position:relative;
+}
+/* Fixed in the same corner of the same static header on every screen (only
+   #main/#footer get re-rendered) — always the same spot to tap out of
+   whatever's on screen straight back to Home. */
+.closeBtn{
+  position:absolute; top:14px; right:16px;
+  width:30px; height:30px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--panel2); border:1px solid var(--iron); border-radius:50%;
+  color:var(--muted); font-size:15px; line-height:1; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.closeBtn:active{ border-color:var(--blood-bright); color:var(--blood-bright); }
+h1{
+  margin:0;
+  font-family: Impact, 'Arial Narrow', sans-serif;
+  font-stretch:condensed;
+  font-size:30px;
+  letter-spacing:4px;
+  color:var(--parchment);
+  text-shadow:0 0 18px rgba(194,147,47,0.25);
+}
+h1 span{color:var(--blood-bright);}
+.subtitle{
+  margin-top:4px;
+  font-size:11px;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+
+main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
+  gap:16px;
+  overflow-y:auto;
+}
+
+/* buttons */
+.btn{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  padding:16px 18px;
+  background:var(--panel2);
+  border:1px solid var(--iron);
+  color:var(--parchment);
+  font-family:inherit;
+  font-size:13px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  transition:background .15s, transform .05s;
+}
+.btn:active{transform:scale(0.98);}
+.btn.primary{background:linear-gradient(180deg, var(--blood) 0%, #4a0f0f 100%); border-color:var(--blood-bright);}
+.btn.primary:hover{background:linear-gradient(180deg, var(--blood-bright) 0%, var(--blood) 100%);}
+.btn.ghost{background:transparent;}
+.btn.gold{border-color:var(--brass); color:var(--brass);}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+
+.detailsToggle{
+  align-self:center;
+  background:none; border:none; clip-path:none;
+  padding:4px 8px;
+  font-family:inherit; font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--muted); cursor:pointer;
+}
+.detailsToggle:active{transform:scale(0.98);}
+
+.divider{
+  display:flex; align-items:center; gap:10px;
+  color:var(--muted); font-size:10px; letter-spacing:3px; text-transform:uppercase;
+}
+.divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--iron);}
+
+input[type=text], input[type=password], input[type=date], input[type=number], textarea{
+  width:100%;
+  padding:14px;
+  background:var(--void);
+  border:1px solid var(--iron);
+  color:var(--parchment);
+  font-family:inherit;
+  font-size:14px;
+  letter-spacing:1px;
+  color-scheme:dark;
+}
+input[type=text]:focus, input[type=password]:focus, input[type=date]:focus, input[type=number]:focus, textarea:focus{outline:2px solid var(--brass); outline-offset:1px;}
+input[type=text]::placeholder, input[type=password]::placeholder, input[type=number]::placeholder{letter-spacing:normal;}
+textarea{resize:vertical; min-height:160px; letter-spacing:normal; line-height:1.4;}
+textarea::placeholder{font-style:italic; color:var(--muted);}
+
+/* A screen's primary action button(s) — confirm/cancel on a picker, tabs
+   plus "Add Units" on the tracker, or just a trailing Home/Cancel — pinned
+   to the top of the scrollable area instead of trailing after a long list,
+   so they're reachable without scrolling past everything first. Needs its
+   own opaque background since .btn.ghost is transparent and would
+   otherwise let scrolled-past list rows show through underneath it. */
+.stickyTopBar{
+  display:flex; flex-direction:column; gap:8px;
+  position:sticky; top:0; z-index:5;
+  background:var(--panel); padding-bottom:10px; margin-bottom:-2px;
+  border-bottom:1px solid var(--iron);
+}
+
+/* battle tracker */
+.tabBar{
+  display:flex; border:1px solid var(--iron);
+}
+.tabBtn{
+  flex:1; padding:12px 6px; background:var(--panel2); border:none;
+  border-right:1px solid var(--iron); color:var(--muted);
+  font-family:inherit; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer;
+}
+.tabBtn:last-child{border-right:none;}
+.tabBtn.active{ background:var(--void); color:var(--brass); box-shadow:inset 0 -2px 0 var(--brass); }
+
+.vpBoard{
+  display:flex; align-items:center; border:1px solid var(--iron); background:var(--panel2); margin-bottom:10px;
+}
+.vpSide{ flex:1; text-align:center; padding:14px 6px; }
+.vpLabel{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+.vpTotal{ font-family:Impact,'Arial Narrow',sans-serif; font-stretch:condensed; font-size:34px; color:var(--brass); margin-top:2px; }
+.vpVs{ font-size:11px; color:var(--muted); letter-spacing:2px; padding:0 4px; }
+
+.turnBadge{
+  text-align:center; padding:12px 8px; margin-bottom:14px;
+  border:1px solid var(--iron); background:var(--void);
+  font-family:Impact,'Arial Narrow',sans-serif; font-stretch:condensed;
+  font-size:24px; letter-spacing:3px; text-transform:uppercase; color:var(--brass);
+}
+
+.trackerSide{ border:1px solid var(--iron); background:var(--panel2); padding:14px; margin-bottom:12px; }
+.counterRow{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.counterLabel{ flex:1; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+.counterRow input[type=number]{ width:80px; padding:8px; }
+.counterBtn{
+  width:34px; height:34px; border-radius:50%; border:1px solid var(--iron);
+  background:var(--void); color:var(--brass); font-size:18px; line-height:1; cursor:pointer;
+}
+.counterBtn:active{ border-color:var(--brass); }
+.counterVal{ min-width:28px; text-align:center; font-size:16px; color:var(--parchment); font-weight:bold; }
+
+.secListLabel{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin:10px 0 6px; }
+.secItem{
+  display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid #241d14;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.secItem:last-of-type{ border-bottom:none; }
+.secName{ flex:1; font-size:12px; color:var(--parchment); }
+.secName.scored{ color:var(--good); }
+.secPts{ font-size:11px; color:var(--brass); white-space:nowrap; }
+.secMenuHint{ color:var(--muted); font-size:14px; padding:0 4px; }
+
+/* camera view */
+#camWrap{
+  position:relative;
+  width:100%;
+  aspect-ratio:3/4;
+  background:#000;
+  overflow:hidden;
+  border:1px solid var(--iron);
+}
+video{width:100%; height:100%; object-fit:cover; display:block;}
+canvas{display:none;}
+.reticle{
+  position:absolute; inset:0; pointer-events:none;
+}
+.corner{
+  position:absolute; width:34px; height:34px; border:2px solid var(--brass);
+  filter:drop-shadow(0 0 4px rgba(194,147,47,.6));
+}
+.corner.tl{top:14px; left:14px; border-right:none; border-bottom:none;}
+.corner.tr{top:14px; right:14px; border-left:none; border-bottom:none;}
+.corner.bl{bottom:14px; left:14px; border-right:none; border-top:none;}
+.corner.br{bottom:14px; right:14px; border-left:none; border-top:none;}
+.scanline{
+  position:absolute; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--blood-bright), transparent);
+  box-shadow:0 0 12px var(--blood-bright);
+  animation:sweep 2.2s linear infinite;
+}
+@keyframes sweep{
+  0%{top:0%;} 100%{top:100%;}
+}
+.camControls{
+  display:flex; justify-content:center; align-items:center; gap:26px; margin-top:16px;
+}
+.shutter{
+  width:66px; height:66px; border-radius:50%;
+  border:3px solid var(--brass);
+  background:radial-gradient(circle, var(--blood-bright) 0%, var(--blood) 70%);
+  cursor:pointer;
+}
+.shutter:active{transform:scale(.94);}
+.smallCircle{
+  width:44px; height:44px; border-radius:50%;
+  border:1px solid var(--iron); background:var(--panel2); color:var(--muted);
+  display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer;
+}
+
+/* loading */
+.loadWrap{ text-align:center; padding:40px 10px; }
+.cog{
+  width:56px; height:56px; margin:0 auto 18px;
+  border:3px solid var(--iron); border-top-color:var(--brass); border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loadStatus{font-size:12px; letter-spacing:2px; color:var(--brass); text-transform:uppercase;}
+.loadSub{font-size:11px; color:var(--muted); margin-top:6px;}
+
+/* custom model library */
+.libCard{
+  padding:12px; background:var(--panel2); border:1px solid var(--iron);
+  cursor:pointer; margin-bottom:10px;
+}
+.libCard:active{ border-color:var(--brass); }
+.libThumb{ width:100%; max-height:200px; object-fit:cover; border:1px solid var(--iron); display:block; margin-bottom:8px; }
+.libName{ font-size:15px; letter-spacing:1px; color:var(--parchment); font-weight:bold; }
+.libMeta{ font-size:11px; color:var(--brass); margin-top:2px; text-transform:uppercase; letter-spacing:1px; }
+
+/* datasheet */
+.sheet{ border:1px solid var(--iron); background:var(--panel2); }
+.sheetHead{
+  padding:16px; padding-right:112px; border-bottom:2px solid var(--blood); background:var(--void);
+}
+.sheetName{font-family:Impact,'Arial Narrow',sans-serif; font-stretch:condensed; font-size:22px; letter-spacing:2px; color:var(--parchment);}
+.sheetFaction{font-size:11px; color:var(--brass); letter-spacing:2px; text-transform:uppercase; margin-top:2px;}
+.sheetPoints{
+  position:absolute; top:16px; right:20px; width:96px;
+  font-size:11px; line-height:1.35; color:var(--muted); text-align:right;
+}
+.ptsFlag{color:var(--brass); font-weight:700; margin-left:2px;}
+
+.statGrid{
+  display:grid; grid-template-columns:repeat(6,1fr);
+  border-bottom:1px solid var(--iron);
+}
+.statCell{
+  padding:10px 4px; text-align:center; border-right:1px solid var(--iron);
+}
+.statCell:last-child{border-right:none;}
+.statLabel{font-size:9px; color:var(--muted); letter-spacing:1px;}
+.statVal{font-size:16px; color:var(--brass); font-weight:bold; margin-top:3px;}
+
+.section{padding:14px 16px; border-bottom:1px solid var(--iron);}
+.section:last-child{border-bottom:none;}
+.sectionTitle{
+  font-size:10px; letter-spacing:2px; color:var(--brass); text-transform:uppercase; margin-bottom:10px;
+}
+table.weapons{width:100%; border-collapse:collapse; font-size:11px;}
+table.weapons th{
+  text-align:left; padding:5px 4px; color:var(--muted); font-weight:normal;
+  border-bottom:1px solid var(--iron); text-transform:uppercase; letter-spacing:.5px; font-size:9px;
+}
+table.weapons td{padding:6px 4px; border-bottom:1px solid #241d14; vertical-align:top;}
+.wName{color:var(--parchment); font-weight:bold;}
+.wType{font-size:9px; color:var(--muted); display:block;}
+
+.abilityItem{margin-bottom:10px;}
+.abilityName{color:var(--parchment); font-weight:bold; font-size:12px;}
+.abilityDesc{font-size:12px; color:var(--muted); line-height:1.5; margin-top:2px;}
+
+.chips{display:flex; flex-wrap:wrap; gap:6px;}
+.chip{
+  font-size:10px; padding:3px 9px; border:1px solid var(--iron); color:var(--parchment);
+  letter-spacing:.5px; text-transform:uppercase;
+}
+
+.noteBox{
+  font-size:10.5px; color:var(--muted); line-height:1.5; padding:12px 16px;
+  border-top:1px dashed var(--iron);
+}
+
+.errBox{
+  padding:16px; border:1px solid var(--blood-bright); background:rgba(122,26,26,0.15);
+  font-size:12px; line-height:1.5;
+}
+.errBox .errTitle{color:var(--blood-bright); letter-spacing:1px; text-transform:uppercase; font-size:11px; margin-bottom:6px; font-weight:bold;}
+
+.thumb{width:100%; border:1px solid var(--iron); display:block;}
+
+/* battle tracker — primary mission */
+.missionSide{ border:1px solid var(--iron); background:var(--panel2); margin-bottom:14px; }
+.missionSideHead{ padding:14px 16px; border-bottom:2px solid var(--blood); background:var(--void); }
+.missionSideLabel{ font-size:10px; letter-spacing:2px; color:var(--brass); text-transform:uppercase; }
+.missionName{ font-family:Impact,'Arial Narrow',sans-serif; font-stretch:condensed; font-size:20px; letter-spacing:1.5px; color:var(--parchment); margin-top:2px; }
+.missionFlavor{ font-size:11px; color:var(--muted); font-style:italic; line-height:1.5; margin-top:6px; }
+
+.missionBlock{ padding:12px 16px; border-bottom:1px solid var(--iron); }
+.missionBlock:last-child{ border-bottom:none; }
+.missionBlock.missionBlockActive{ background:rgba(194,147,47,0.08); box-shadow:inset 3px 0 0 var(--brass); }
+.missionBlockHdr{ font-size:10px; letter-spacing:1.5px; color:var(--brass); text-transform:uppercase; margin-bottom:3px; }
+.missionBlockWhen{ font-size:10.5px; color:var(--muted); margin-bottom:6px; }
+.missionEntry{ display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--parchment); line-height:1.4; margin-top:4px; }
+.missionEntry .missionVP{ color:var(--brass); font-weight:bold; white-space:nowrap; font-size:11px; }
+.missionEntry .missionVP.cumulative::after{ content:" (cumul.)"; color:var(--muted); font-weight:normal; }
+
+.missionAction{ margin:10px 16px 14px; padding-top:10px; border-top:1px dashed var(--iron); }
+.missionActionName{ font-size:12px; color:var(--parchment); font-weight:bold; margin-bottom:6px; }
+.missionActionRow{ font-size:11px; color:var(--muted); line-height:1.5; margin-top:3px; }
+.missionActionRow b{ color:var(--parchment); }
+
+footer{
+  padding:12px 20px 18px; flex-shrink:0; display:flex; gap:10px;
+}
+footer .btn{flex:1;}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:var(--iron);}
+
+/* install instructions modal */
+.modalOverlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  z-index:50;
+}
+.modalCard{
+  width:100%; max-width:400px; padding:20px;
+  background:var(--panel2); border:1px solid var(--brass);
+}
+.modalTitle{
+  font-family:Impact,'Arial Narrow',sans-serif; font-stretch:condensed;
+  font-size:18px; letter-spacing:2px; color:var(--parchment); margin-bottom:10px;
+}
+.modalBody{font-size:12px; color:var(--muted); line-height:1.6;}
+
+/* Slide-to-delete confirm bar — see confirmSlideDelete() in main.js */
+.slideDeleteTrack{
+  position:relative;
+  height:52px;
+  margin-top:16px;
+  background:var(--panel);
+  border:1px solid var(--iron);
+  overflow:hidden;
+  user-select:none;
+}
+.slideDeleteFill{
+  position:absolute; top:0; left:0; height:100%; width:0;
+  background:linear-gradient(180deg, var(--blood) 0%, #4a0f0f 100%);
+  pointer-events:none;
+}
+.slideDeleteLabel{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted);
+  pointer-events:none;
+}
+.slideDeleteThumb{
+  position:absolute; top:2px; left:2px;
+  width:48px; height:46px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--blood-bright);
+  border:1px solid var(--brass);
+  font-size:18px;
+  cursor:grab;
+  touch-action:none;
+}

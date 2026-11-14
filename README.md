@@ -1,0 +1,46 @@
+# WarCamera 4k
+
+Point your camera at a Warhammer 40,000 miniature, get an AI best-guess at
+which unit it is, then pull that unit's stat line, weapons, and abilities
+from the model's own knowledge of the game. Installable as a PWA — "Add to
+Home Screen" gets you an app icon and a standalone (no browser chrome)
+window.
+
+Hosted the same way as [Dinner Bell](https://github.com/Fattymatty007/dinner-bell)
+and [In Stock](https://github.com/Fattymatty007/In-Stock): a static Vite build
+deployed to GitHub Pages under its own `mattsapps.xyz` subdomain, linked from
+the [mattsapps](https://github.com/Fattymatty007/mattsapps) launcher.
+
+Unlike those two, this app calls the Gemini API (vision to identify the
+miniature, plain text generation for the datasheet — no Google Search
+grounding, deliberately: grounding requires a billing-enabled Google Cloud
+project even within free-tier usage, and this app is meant to run on
+anyone's free key with zero setup cost). Stats come from the model's
+training data rather than a live lookup, so a very recent points/balance
+update might not be reflected — the app says so on-screen. See
+[SETUP.md](SETUP.md) for the one-time Cloudflare Worker deploy that keeps
+the API key out of the browser.
+
+The app doesn't bundle, scrape, or fetch any Games Workshop rules, points,
+detachment, or mission data. Every datasheet comes from the Gemini lookup,
+which is told to paraphrase rules in its own words rather than quote them.
+In the battle tracker, players type in the Secondary Missions they drew
+from their own deck and score Primary VP themselves.
+
+By default every visitor shares the worker owner's key. Anyone can opt out
+of that via **🔑 API Key Settings** on the home screen and paste in their
+own free Gemini key instead — it's stored only on their device and passed
+through the worker per-request (never stored or logged server-side), so
+their usage draws from their own quota rather than the owner's.
+
+## Local development
+
+```sh
+npm install
+npm run dev
+```
+
+Camera access requires HTTPS or `localhost` — `npm run dev` serves on
+`localhost`, so that's covered. Without a deployed worker (see SETUP.md) and
+a local `.env.local` pointing `VITE_WORKER_URL` at it, scanning and datasheet
+lookups will fail — everything else in the UI still renders.
